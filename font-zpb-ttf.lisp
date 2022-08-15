@@ -44,7 +44,7 @@
 (defmethod font:tables ((font zpb-ttf::font-loader))
   (u:loop-hash (key value (zpb-ttf::tables font ))
     :collect (zpb-ttf::name value)))
-(defmethod font:table ((table string) (font zpb-ttf::font-loader))
+(defmethod font:raw-table ((table string) (font zpb-ttf::font-loader))
   (let* ((info (zpb-ttf::table-info table font))
          (result (make-array (zpb-ttf::size info) :element-type '(unsigned-byte 8))))
     (zpb-ttf::seek-to-table info font)
