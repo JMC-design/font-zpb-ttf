@@ -4,7 +4,7 @@
 (defmethod font:%open (font (type (eql :ttf)))
   (zpb-ttf:open-font-loader font))
 (defmethod font:open ((font zpb-ttf::font-loader))
-  (zpb-ttf:open-font-loader font))
+  font);opening an open font loader doesn't work in zpb-ttf, issue already raised.
 (defmethod font:close ((font zpb-ttf::font-loader))
   (zpb-ttf:close-font-loader font))
 

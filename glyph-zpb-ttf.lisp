@@ -67,8 +67,7 @@
          (width (ceiling (glyph:x-max bbox)))
          (height (ceiling (- (glyph:y-max bbox) (glyph:y-min bbox))))
          (paths (paths:path-translate (glyph:paths glyph :ppem ppem) (cons (- (aref bbox 0)) (- (aref bbox 1)))))
-         (result (make-array (list height width) :element-type '(unsigned-byte 8)
-                             ))
+         (result (make-array (list height width) :element-type '(unsigned-byte 8)))
          (state (aa:make-state)))
     (vectors:update-state state paths)
     (aa:cells-sweep state (lambda (x y a) (setf (aref result y x) (let ((value (mod a 512)))
@@ -77,9 +76,11 @@
 
 (defmethod glyph:raster ((glyph zpb-ttf::glyph)&optional ppem)
   (let* ((bbox (glyph:bounding-box glyph ppem))
-         (width (ceiling (glyph:x-max bbox)))
-         (height (- (ceiling (glyph:y-max bbox)) (floor (glyph:y-min bbox))))
-         (paths (paths:path-translate (glyph:paths glyph :ppem ppem) (cons (- (aref bbox 0)) (- (aref bbox 1)))))
+         (x-min (floor (glyph:x-min bbox)))
+         (width (- (ceiling (glyph:x-max bbox)) (if (plusp x-min) (- x-min) x-min)))
+         (y-min (floor (glyph:y-min bbox)))
+         (height  (-  (ceiling (glyph:y-max bbox)) (if (plusp y-min)(- y-min) y-min) ))
+         (paths (paths:path-translate (glyph:paths glyph :ppem ppem) (cons (- x-min) (- y-min))))
          (result (make-array (* height width) :element-type '(unsigned-byte 8)))
          (state (aa:make-state)))
     (vectors:update-state state paths)
@@ -94,29 +95,25 @@
 ;;     (multiple-value-bind (data size)(glyph:raster (font:glyph char font) ppem)
 ;;       (gl:draw-pixels (car size) (cdr size ) :luminance :unsigned-byte data))))
 
-;; (defun test-render ()
-;;   (loop  :for list :in (list '(a b c d e f g h)
-;;                              '(i j k l m n o p)
-;;                              '(q r s t u v w x)
-;;                              '(y z A B C D E F)
-;;                              '(G H I J K L M N)
-;;                              '(O P Q R S T U V))
-;;          :for y from 0 :to 900 :by 100
-;;          :do (loop :for sym :in list
-;;                    :for x :from 0 :to 600 :by 100
-;;                    :do (font-zpb-ttf::gl-test (coerce (symbol-name sym) 'character) (fonts:find-match "deja") (cons x y)))))
+;; (defun test-render (&optional (ppem 100) (font (fonts:find-match "deja")))
+;;   (declare (optimize debug))
+;;   (let ((font (font:open font)))
+;;     (loop  :for string :in (list "abcdefgh"
+;;                                  "ijklmnop"
+;;                                  "qrstuvwx"
+;;                                  "yzABCDEF"
+;;                                  "GHIJKLMN"
+;;                                  "OPQRSTUV"
+;;                                  "WXYZ1234")
+;;            :for y :from 0 :by ppem
+;;            :do (loop :for char :across string
+;;                      :for x :from 0 :by ppem
+;;                      :do (font-zpb-ttf::gl-test char font (cons x y) ppem)))))
+
+;; (defun get-all-rasters (&optional (ppem 100) (font (fonts:find-match "deja")))
+;;   (let ((font (font:open font )))
+;;     (loop :for char :across "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`\|[]{}()!@#$%^&*_+-=;':<>?,./\""
+;;           :collect (glyph:raster (font:glyph char font) ppem))))
 
 
 
-;; ;; refactor raster to have as default.
-;; (defmethod glyph:raster ((glyph zpb-ttf::glyph)&optional ppem)
-;;   (let* ((bbox (glyph:bounding-box glyph ppem))
-;;          (width (ceiling (glyph:x-max bbox)))
-;;          (height (ceiling (- (glyph:y-max bbox) (glyph:y-min bbox))))
-;;          (paths (paths:path-translate (glyph:paths glyph :ppem ppem) (cons (- (aref bbox 0)) (- (aref bbox 1)))))
-;;          (result (raster:create width height :format :a8))
-;;          (state (aa:make-state)))
-;;     (vectors:update-state state paths)
-;;     (aa:cells-sweep state (lambda (x y a) (raster:set-pixel x y (vector (let ((value (mod a 512)))
-;;                                                                    (min 255 (if (< value 256) value (- 512 value))))) result)))
-;;     result))
