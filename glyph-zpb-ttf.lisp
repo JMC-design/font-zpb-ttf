@@ -55,10 +55,68 @@
   (net.tuxee.paths-ttf:paths-from-glyph glyph :offset offset :scale-x scale-x :scale-y scale-y :auto-orient auto-orient))
 
 ;;cripple to only square pixels, how will we deal with 50 year old technology?
-(defmethod glyph:paths ((glyph zpb-ttf::glyph) &key ppem (offset (cons 0 0)))
+(defmethod glyph:paths ((glyph zpb-ttf::glyph) &key ppem (offset (cons 0 0)) inverted)
   (let ((scale-x (if (null ppem) 1.0 (/ ppem (glyph:em glyph)))))
-    (paths glyph :offset offset :scale-x scale-x :scale-y scale-x)))
+    (paths glyph :offset offset :scale-x scale-x :scale-y (if inverted (- scale-x)scale-x))))
 
 (defmethod glyph:font ((glyph zpb-ttf::glyph))
   (zpb-ttf::font-loader glyph))
 
+(defmethod glyph:raster ((glyph zpb-ttf::glyph)&optional ppem)
+  (let* ((bbox (glyph:bounding-box glyph ppem))
+         (width (ceiling (glyph:x-max bbox)))
+         (height (ceiling (- (glyph:y-max bbox) (glyph:y-min bbox))))
+         (paths (paths:path-translate (glyph:paths glyph :ppem ppem) (cons (- (aref bbox 0)) (- (aref bbox 1)))))
+         (result (make-array (list height width) :element-type '(unsigned-byte 8)
+                             ))
+         (state (aa:make-state)))
+    (vectors:update-state state paths)
+    (aa:cells-sweep state (lambda (x y a) (setf (aref result y x) (let ((value (mod a 512)))
+                                                                    (min 255 (if (< value 256) value (- 512 value)))))))
+    result))
+
+(defmethod glyph:raster ((glyph zpb-ttf::glyph)&optional ppem)
+  (let* ((bbox (glyph:bounding-box glyph ppem))
+         (width (ceiling (glyph:x-max bbox)))
+         (height (- (ceiling (glyph:y-max bbox)) (floor (glyph:y-min bbox))))
+         (paths (paths:path-translate (glyph:paths glyph :ppem ppem) (cons (- (aref bbox 0)) (- (aref bbox 1)))))
+         (result (make-array (* height width) :element-type '(unsigned-byte 8)))
+         (state (aa:make-state)))
+    (vectors:update-state state paths)
+    (aa:cells-sweep state (lambda (x y a) (setf (aref result (+ x (* y width))) (let ((value (mod a 512)))
+                                                                    (min 255 (if (< value 256) value (- 512 value)))))))
+    (values result
+            (cons width height))))
+
+;; (defun gl-test (char font &optional (location (cons 0 0)) (ppem 160))
+;;   (let ((font (font:open font)))
+;;     (gl:window-pos (car location ) (cdr location))
+;;     (multiple-value-bind (data size)(glyph:raster (font:glyph char font) ppem)
+;;       (gl:draw-pixels (car size) (cdr size ) :luminance :unsigned-byte data))))
+
+;; (defun test-render ()
+;;   (loop  :for list :in (list '(a b c d e f g h)
+;;                              '(i j k l m n o p)
+;;                              '(q r s t u v w x)
+;;                              '(y z A B C D E F)
+;;                              '(G H I J K L M N)
+;;                              '(O P Q R S T U V))
+;;          :for y from 0 :to 900 :by 100
+;;          :do (loop :for sym :in list
+;;                    :for x :from 0 :to 600 :by 100
+;;                    :do (font-zpb-ttf::gl-test (coerce (symbol-name sym) 'character) (fonts:find-match "deja") (cons x y)))))
+
+
+
+;; ;; refactor raster to have as default.
+;; (defmethod glyph:raster ((glyph zpb-ttf::glyph)&optional ppem)
+;;   (let* ((bbox (glyph:bounding-box glyph ppem))
+;;          (width (ceiling (glyph:x-max bbox)))
+;;          (height (ceiling (- (glyph:y-max bbox) (glyph:y-min bbox))))
+;;          (paths (paths:path-translate (glyph:paths glyph :ppem ppem) (cons (- (aref bbox 0)) (- (aref bbox 1)))))
+;;          (result (raster:create width height :format :a8))
+;;          (state (aa:make-state)))
+;;     (vectors:update-state state paths)
+;;     (aa:cells-sweep state (lambda (x y a) (raster:set-pixel x y (vector (let ((value (mod a 512)))
+;;                                                                    (min 255 (if (< value 256) value (- 512 value))))) result)))
+;;     result))
