@@ -94,6 +94,7 @@
 
 ;; (defun gl-test (char font &optional (location (cons 0 0)) (ppem 160))
 ;;   (let ((font (font:open font)))
+;;     (gl:pixel-store :unpack-alignment 1 )
 ;;     (gl:window-pos (car location ) (cdr location))
 ;;     (multiple-value-bind (data size)(glyph:raster (font:glyph char font) ppem)
 ;;       (gl:draw-pixels (car size) (cdr size ) :luminance :unsigned-byte data))))
