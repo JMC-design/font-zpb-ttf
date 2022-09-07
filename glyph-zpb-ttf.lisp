@@ -62,24 +62,15 @@
 (defmethod glyph:font ((glyph zpb-ttf::glyph))
   (zpb-ttf::font-loader glyph))
 
-(defmethod glyph:raster ((glyph zpb-ttf::glyph)&optional ppem)
-  (let* ((bbox (glyph:bounding-box glyph ppem))
-         (width (ceiling (glyph:x-max bbox)))
-         (height (ceiling (- (glyph:y-max bbox) (glyph:y-min bbox))))
-         (paths (paths:path-translate (glyph:paths glyph :ppem ppem) (cons (- (aref bbox 0)) (- (aref bbox 1)))))
-         (result (make-array (list height width) :element-type '(unsigned-byte 8)))
-         (state (aa:make-state)))
-    (vectors:update-state state paths)
-    (aa:cells-sweep state (lambda (x y a) (setf (aref result y x) (let ((value (mod a 512)))
-                                                                    (min 255 (if (< value 256) value (- 512 value)))))))
-    result))
 
+
+;;;; This should probably be in FONTS
 (defmethod glyph:raster ((glyph zpb-ttf::glyph)&optional ppem )
   (let* ((bbox (glyph:bounding-box glyph ppem))
          (x-min (floor (glyph:x-min bbox)))
-         (width (+ (ceiling (glyph:x-max bbox)) (if (plusp x-min) 0 (- x-min))))
+         (width (- (ceiling (glyph:x-max bbox))  x-min))
          (y-min (floor (glyph:y-min bbox)))
-         (height  (-  (ceiling (glyph:y-max bbox)) (if (plusp y-min)(- y-min) y-min) ))
+         (height  (-  (ceiling (glyph:y-max bbox)) y-min))
          (paths (paths:path-translate (glyph:paths glyph :ppem ppem) (cons (- x-min) (- y-min))))
          (result (make-array (* height width) :element-type '(unsigned-byte 8)))
          (state (aa:make-state)))
@@ -90,7 +81,8 @@
                                                   (let ((value (mod a 512)))
                                                     (min 255 (if (< value 256) value (- 512 value))))))))
     (values result
-            (cons width height))))
+            (cons width height)
+            (cons x-min y-min))))
 
 ;; (defun gl-test (char font &optional (location (cons 0 0)) (ppem 160))
 ;;   (let ((font (font:open font)))
