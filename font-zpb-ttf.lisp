@@ -48,9 +48,6 @@
                (push (zpb-ttf::name value) result))
              (zpb-ttf::tables font))
     (nreverse result)))
-
-;; (u:loop-hash (key value (zpb-ttf::tables font ))
-;;     :collect (zpb-ttf::name value))
 (defmethod font:raw-table ((table string) (font zpb-ttf::font-loader))
   (let* ((info (zpb-ttf::table-info table font))
          (result (make-array (zpb-ttf::size info) :element-type '(unsigned-byte 8))))
