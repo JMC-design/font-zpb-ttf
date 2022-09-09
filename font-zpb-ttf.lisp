@@ -52,7 +52,8 @@
     result))
 
 (defmethod font:glyphs ((font zpb-ttf::font-loader))
-  (zpb-ttf::glyph-cache font))
+                                        ;(zpb-ttf::glyph-cache font) ;easiest would be to prefill the cache but...
+  (remove nil (map 'list (lambda (i) (unless (minusp i)i)) (zpb-ttf::invert-character-map font)))) ;should this return vector? actual glyphs/chars instead of codepoints?
 (defmethod font:glyph-count ((font zpb-ttf::font-loader))
   (zpb-ttf:glyph-count font))
 (defmethod font:code-points ((font zpb-ttf::font-loader))
