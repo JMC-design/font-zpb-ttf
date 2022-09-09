@@ -50,10 +50,11 @@
     (zpb-ttf::seek-to-table info font)
     (read-sequence result (zpb-ttf::input-stream font))
     result))
-
+(defmethod font:code-points ((font zpb-ttf::font-loader))
+  (remove nil (map 'list (lambda (i) (unless (minusp i)i)) (zpb-ttf::invert-character-map font))))
 (defmethod font:glyphs ((font zpb-ttf::font-loader))
-                                        ;(zpb-ttf::glyph-cache font) ;easiest would be to prefill the cache but...
-  (remove nil (map 'list (lambda (i) (unless (minusp i)i)) (zpb-ttf::invert-character-map font)))) ;should this return vector? actual glyphs/chars instead of codepoints?
+  ;;(zpb-ttf::glyph-cache font) ;easiest would be to prefill the cache but...
+  (mapcar (lambda (i) (font:glyph i font)) (font:code-points font))) ;should this return vector? 
 (defmethod font:glyph-count ((font zpb-ttf::font-loader))
   (zpb-ttf:glyph-count font))
 (defmethod font:code-points ((font zpb-ttf::font-loader))
