@@ -36,8 +36,8 @@
 (defmethod font:glyph (char-or-code (font zpb-ttf::font-loader))
   (zpb-ttf:find-glyph char-or-code font))
 
-(defmethod font:kerning (font charA charB &optional ppem)
-  (glyph:reify? (zpb-ttf:kerning-offset charA charB font) (font:em font) ppem))
+(defmethod font:kerning ((font zpb-ttf::font-loader) left right &optional ppem)
+  (glyph:reify? (zpb-ttf:kerning-offset left right font) (font:em font) ppem))
 
 (defmethod font:index ((glyph zpb-ttf::glyph) (font zpb-ttf::font-loader))
   (zpb-ttf::font-index glyph))
