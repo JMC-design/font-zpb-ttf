@@ -61,7 +61,4 @@
   (mapcar (lambda (i) (font:glyph i font)) (font:code-points font))) ;should this return vector? 
 (defmethod font:glyph-count ((font zpb-ttf::font-loader))
   (zpb-ttf:glyph-count font))
-(defmethod font:code-points ((font zpb-ttf::font-loader))
-  (loop :for glyph :across (font:glyphs font)
-        :when glyph
-          :collect (glyph:code-point glyph)))
+
